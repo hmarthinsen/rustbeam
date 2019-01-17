@@ -1,0 +1,9 @@
+[package]
+name = "rustbeam"
+version = "0.1.0"
+authors = ["Håkon Marthinsen <hakon.marthinsen@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+[dependencies]
+sdl2 = "0.32"
