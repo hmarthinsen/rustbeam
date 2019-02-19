@@ -6,4 +6,5 @@ edition = "2018"
 build = "build.rs"
 
 [dependencies]
+png = "0.14"
 sdl2 = "0.32"
