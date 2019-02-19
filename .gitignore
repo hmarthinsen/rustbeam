@@ -6,6 +6,3 @@
 **/*.rs.bk
 
 /*.dll
-
-# Test data output folder
-test-data/test-data-out/
