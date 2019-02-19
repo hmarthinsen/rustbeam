@@ -8,8 +8,11 @@ pub fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
+    let window_width = 1280;
+    let window_height = 720;
+
     let window = video_subsystem
-        .window("rust-sdl2 demo", 1280, 720)
+        .window("rust-sdl2 demo", window_width as u32, window_height as u32)
         .position_centered()
         .build()
         .unwrap();
