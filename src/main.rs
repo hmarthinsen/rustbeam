@@ -26,7 +26,7 @@ pub fn main() {
     let texture_creator = canvas.texture_creator();
     let mut texture = texture_creator
         .create_texture_streaming(
-            PixelFormatEnum::RGBA8888,
+            PixelFormatEnum::ABGR8888,
             window_width as u32,
             window_height as u32,
         )
