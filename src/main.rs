@@ -63,5 +63,5 @@ pub fn main() {
         canvas.present();
     }
 
-    image.save_png("test.png");
+    image.save_png("test-data/test-data-out/test.png");
 }

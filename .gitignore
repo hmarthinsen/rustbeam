@@ -6,4 +6,6 @@
 **/*.rs.bk
 
 /*.dll
-test-data/test_make_image.png
+
+# Test data output folder
+test-data/test-data-out/

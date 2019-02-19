@@ -133,7 +133,7 @@ mod tests {
     #[test]
     fn make_image() {
         let image = Image::new(640, 480);
-        let filename = "test-data/test_make_image.png";
+        let filename = "test-data/test-data-out/test_make_image.png";
         let ref_filename = "test-data/test_make_image_ref.png";
         image.save_png(filename);
         let image_data = image.to_srgba_vector();
