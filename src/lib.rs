@@ -142,7 +142,4 @@ mod tests {
 
         assert_eq!(image_data, ref_image_data);
     }
-
-    #[test]
-    fn test_linear_to_srgb() {}
 }
