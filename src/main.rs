@@ -1,4 +1,4 @@
-use rustbeam::{Image, Pixel};
+use rustbeam::Image;
 use sdl2::{
     event::Event,
     keyboard::Keycode,
@@ -32,14 +32,8 @@ pub fn main() {
         )
         .unwrap();
 
-    let mut image = Image::new(window_width, window_height);
-    for x in 0..window_width {
-        for y in 0..window_height {
-            let mut pixel = Pixel::new();
-            pixel.r = 1.0;
-            image.set_pixel(x, y, pixel);
-        }
-    }
+    let image = Image::new(window_width, window_height);
+    // image.render_sphere();
     let srgba_vec = image.to_srgba_vector();
     texture
         .update(None, srgba_vec.as_slice(), 4 * window_width)

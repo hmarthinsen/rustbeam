@@ -1,6 +1,7 @@
 use png::HasParameters;
 use std::fs::File;
 use std::io::BufWriter;
+use uom::si::{f64::*, length::meter};
 
 #[derive(Copy, Clone)]
 /// A pixel containing RGBA data in floating point format. Values range from 0
@@ -124,6 +125,48 @@ impl Image {
 
         (srgb * 255.0).round() as u8
     }
+
+    pub fn render_sphere(&mut self) {
+        // let aspect_ratio = window_width as f64 / window_height as f64;
+
+        let screen_width = Length::new::<meter>(0.64);
+
+        // We assume square pixels.
+        // let screen_height = screen_width / aspect_ratio;
+
+        // Distance from the eye, assumed at the origin, to the middle of the
+        // screen. The screen is oriented along the z-axis.
+        let distance_to_screen = Length::new::<meter>(0.5);
+
+        let pixel_size = screen_width / self.width as f64;
+
+        let sphere_center_x = Length::new::<meter>(0.0);
+        let sphere_center_y = Length::new::<meter>(0.0);
+        let sphere_center_z = Length::new::<meter>(5.0);
+        let sphere_radius = Length::new::<meter>(0.5);
+
+        for pixel_x in 0..self.width {
+            for pixel_y in 0..self.height {
+                let x = (pixel_x as f64 - 0.5 * (self.width - 1) as f64) * pixel_size;
+                let y = (pixel_y as f64 - 0.5 * (self.height - 1) as f64) * pixel_size;
+                let z = distance_to_screen;
+
+                let t = sphere_center_x * x + sphere_center_y * y + sphere_center_z * z;
+                let t = t / (x * x + y * y + z * z);
+
+                let mut surface_fun = (x * t - sphere_center_x) * (x * t - sphere_center_x);
+                surface_fun += (y * t - sphere_center_y) * (y * t - sphere_center_y);
+                surface_fun += (z * t - sphere_center_z) * (z * t - sphere_center_z);
+                surface_fun -= sphere_radius * sphere_radius;
+
+                let mut pixel = Pixel::new();
+                if surface_fun.is_sign_negative() {
+                    pixel.r = 1.0;
+                }
+                self.set_pixel(pixel_x, pixel_y, pixel);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -135,11 +178,26 @@ mod tests {
         let image = Image::new(640, 480);
         let filename = "test-data/test-data-out/test_make_image.png";
         let ref_filename = "test-data/test_make_image_ref.png";
+
         image.save_png(filename);
+
         let image_data = image.to_srgba_vector();
-
         let ref_image_data = Image::read_png(ref_filename);
+        assert_eq!(image_data, ref_image_data);
+    }
 
+    #[test]
+    fn render_sphere() {
+        let mut image = Image::new(1280, 720);
+        let filename = "test-data/test-data-out/test_render_sphere.png";
+        let ref_filename = "test-data/test_render_sphere_ref.png";
+
+        image.render_sphere();
+
+        image.save_png(filename);
+
+        let image_data = image.to_srgba_vector();
+        let ref_image_data = Image::read_png(ref_filename);
         assert_eq!(image_data, ref_image_data);
     }
 }
