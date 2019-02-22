@@ -1,7 +1,7 @@
 use png::HasParameters;
 use std::fs::File;
 use std::io::BufWriter;
-use uom::si::{f64::*, length::meter};
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Copy, Clone)]
 /// A pixel containing RGBA data in floating point format. Values range from 0
@@ -23,6 +23,14 @@ pub struct Image {
     width: usize,
     height: usize,
     pixels: Vec<Pixel>,
+}
+
+#[derive(Copy, Clone, Default)]
+/// A 3D vector
+pub struct Vector3 {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Pixel {
@@ -127,37 +135,39 @@ impl Image {
     }
 
     pub fn render_sphere(&mut self) {
+        // All lengths are in meters.
+
         // let aspect_ratio = window_width as f64 / window_height as f64;
 
-        let screen_width = Length::new::<meter>(0.64);
+        let screen_width = 0.64;
 
         // We assume square pixels.
         // let screen_height = screen_width / aspect_ratio;
 
         // Distance from the eye, assumed at the origin, to the middle of the
         // screen. The screen is oriented along the z-axis.
-        let distance_to_screen = Length::new::<meter>(0.5);
+        let distance_to_screen = 0.5;
 
         let pixel_size = screen_width / self.width as f64;
 
-        let sphere_center_x = Length::new::<meter>(0.0);
-        let sphere_center_y = Length::new::<meter>(0.0);
-        let sphere_center_z = Length::new::<meter>(5.0);
-        let sphere_radius = Length::new::<meter>(0.5);
+        let sphere_center = Vector3 {
+            x: 0.0,
+            y: 0.0,
+            z: 5.0,
+        };
+        let sphere_radius: f64 = 0.5;
 
         for pixel_x in 0..self.width {
             for pixel_y in 0..self.height {
-                let x = (pixel_x as f64 - 0.5 * (self.width - 1) as f64) * pixel_size;
-                let y = (pixel_y as f64 - 0.5 * (self.height - 1) as f64) * pixel_size;
-                let z = distance_to_screen;
+                let pixel_pos = Vector3 {
+                    x: (pixel_x as f64 - 0.5 * (self.width - 1) as f64) * pixel_size,
+                    y: (pixel_y as f64 - 0.5 * (self.height - 1) as f64) * pixel_size,
+                    z: distance_to_screen,
+                };
 
-                let t = sphere_center_x * x + sphere_center_y * y + sphere_center_z * z;
-                let t = t / (x * x + y * y + z * z);
+                let t = sphere_center.dot(&pixel_pos) / pixel_pos.norm2();
 
-                let mut surface_fun = (x * t - sphere_center_x) * (x * t - sphere_center_x);
-                surface_fun += (y * t - sphere_center_y) * (y * t - sphere_center_y);
-                surface_fun += (z * t - sphere_center_z) * (z * t - sphere_center_z);
-                surface_fun -= sphere_radius * sphere_radius;
+                let surface_fun = (pixel_pos * t - sphere_center).norm2() - sphere_radius.powi(2);
 
                 let mut pixel = Pixel::new();
                 if surface_fun.is_sign_negative() {
@@ -166,6 +176,79 @@ impl Image {
                 self.set_pixel(pixel_x, pixel_y, pixel);
             }
         }
+    }
+}
+
+impl Vector3 {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    // Dot product of two vectors.
+    pub fn dot(&self, other: &Self) -> f64 {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    // Square of norm of the vector.
+    pub fn norm2(&self) -> f64 {
+        self.dot(self)
+    }
+
+    // Norm of the vector.
+    pub fn norm(&self) -> f64 {
+        self.norm2().sqrt()
+    }
+}
+
+impl Add for Vector3 {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+
+impl Mul<f64> for Vector3 {
+    type Output = Self;
+
+    fn mul(self, scalar: f64) -> Self {
+        Self {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+        }
+    }
+}
+
+impl Mul<Vector3> for f64 {
+    type Output = Vector3;
+
+    fn mul(self, vector: Vector3) -> Vector3 {
+        vector * self
+    }
+}
+
+impl Neg for Vector3 {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
+impl Sub for Vector3 {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        self + (-other)
     }
 }
 
