@@ -8,4 +8,3 @@ build = "build.rs"
 [dependencies]
 png = "0.14"
 sdl2 = "0.32"
-uom = "0.21"
