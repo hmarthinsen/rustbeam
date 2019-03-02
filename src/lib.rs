@@ -45,7 +45,7 @@ mod tests {
 
         let mut scene = Scene::new();
 
-        scene.add(Sphere::new((0.0, 0.0, 2.0), 0.5));
+        scene.add(Sphere::new((0.0, 2.0, 0.0), 0.5));
 
         scene.render(&mut image);
 
