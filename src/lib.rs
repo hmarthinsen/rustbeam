@@ -1,4 +1,5 @@
 pub mod image;
+pub mod lights;
 pub mod math;
 pub mod scene;
 pub mod surfaces;
@@ -6,6 +7,7 @@ pub mod surfaces;
 #[cfg(test)]
 mod tests {
     use crate::image::Image;
+    use crate::lights::Sun;
     use crate::scene::Scene;
     use crate::surfaces::{Plane, Sphere};
     use std::fs::File;
@@ -45,7 +47,11 @@ mod tests {
 
         let mut scene = Scene::new();
 
-        scene.add(Box::new(Sphere::new((0.0, 2.0, 0.0), 0.5)));
+        scene.add_surface(Box::new(Sphere::new((0.0, 2.0, 0.0), 0.5)));
+
+        scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
+        scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
+        scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
         scene.render(&mut image);
 
@@ -64,7 +70,11 @@ mod tests {
 
         let mut scene = Scene::new();
 
-        scene.add(Box::new(Plane::new((0.0, 0.0, 1.0), -0.5)));
+        scene.add_surface(Box::new(Plane::new((0.0, 0.0, 1.0), -0.5)));
+
+        scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
+        scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
+        scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
         scene.render(&mut image);
 

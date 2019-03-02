@@ -1,5 +1,5 @@
 //! Module containing mathematical structs.
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Mul, Neg, Sub};
 
 /// A closed interval in the set of real numbers.
 pub struct Interval {
@@ -192,6 +192,14 @@ impl Add for Vector3 {
 
     fn add(self, other: Self) -> Self {
         Self::from((self.x + other.x, self.y + other.y, self.z + other.z))
+    }
+}
+
+impl AddAssign for Vector3 {
+    fn add_assign(&mut self, other: Self) {
+        self.x += other.x;
+        self.y += other.y;
+        self.z += other.z;
     }
 }
 

@@ -1,6 +1,7 @@
 #![warn(clippy::all, clippy::pedantic)]
 
 use rustbeam::image::Image;
+use rustbeam::lights::Sun;
 use rustbeam::scene::Scene;
 use rustbeam::surfaces::{Plane, Sphere};
 use sdl2::{
@@ -34,9 +35,13 @@ pub fn main() {
 
     let mut scene = Scene::new();
 
-    scene.add(Box::new(Sphere::new((-1.0, 5.0, 0.0), 1.5)));
-    scene.add(Box::new(Sphere::new((1.0, 5.0, 0.0), 1.0)));
-    scene.add(Box::new(Plane::new((0.0, 0.0, 1.0), -2.0)));
+    scene.add_surface(Box::new(Sphere::new((-1.0, 5.0, 0.0), 1.5)));
+    scene.add_surface(Box::new(Sphere::new((1.0, 5.0, 0.0), 1.0)));
+    scene.add_surface(Box::new(Plane::new((0.0, 0.0, 1.0), -2.0)));
+
+    scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
+    scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
+    scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
     let mut image = Image::new(window_width as usize, window_height as usize);
     scene.render(&mut image);

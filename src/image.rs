@@ -1,3 +1,4 @@
+use crate::math::Vector3;
 use png::HasParameters;
 use std::fs::File;
 use std::io::BufWriter;
@@ -33,6 +34,12 @@ impl Default for Pixel {
 impl From<(f64, f64, f64)> for Pixel {
     fn from(rgb: (f64, f64, f64)) -> Self {
         Self::new(rgb.0, rgb.1, rgb.2, 1.0)
+    }
+}
+
+impl From<Vector3> for Pixel {
+    fn from(rgb: Vector3) -> Self {
+        Self::new(rgb.x, rgb.y, rgb.z, 1.0)
     }
 }
 
