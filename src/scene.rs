@@ -2,7 +2,7 @@ use crate::image::Image;
 use crate::lights::Sun;
 use crate::math::{Ray, UnitQuaternion, Vector3};
 use crate::surfaces::Surface;
-use std::f64::INFINITY;
+use std::f64::{EPSILON, INFINITY};
 
 struct Camera {
     position: Vector3,
@@ -81,10 +81,17 @@ impl Scene {
                 let mut rgb = Vector3::zero();
                 match self.trace(ray) {
                     None => (),
-                    Some(surface_normal) => {
+                    Some((intersection, normal)) => {
                         for light in self.lights.iter() {
                             let dir_to_light = -light.direction;
-                            rgb += surface_normal.dot(dir_to_light).max(0.0) * light.color;
+                            let shadow_ray = Ray::new(intersection, dir_to_light);
+                            match self.trace(shadow_ray) {
+                                Some(_) => (),
+                                None => {
+                                    // The light illuminates the intersection point.
+                                    rgb += normal.dot(dir_to_light).max(0.0) * light.color;
+                                }
+                            }
                         }
                     }
                 }
@@ -93,10 +100,13 @@ impl Scene {
         }
     }
 
-    fn trace(&self, ray: Ray) -> Option<Vector3> {
+    /// Trace a ray until it intersects a surface in the scene. If nothing is
+    /// hit, then `None` is returned. Else, a tuple is returned, where the first
+    /// element is the intersection, and the second is the normal vector.
+    fn trace(&self, ray: Ray) -> Option<(Vector3, Vector3)> {
         let mut closest_intersection = INFINITY;
         //let mut closest_surface: Option<&Box<Surface>> = None;
-        let mut surface_normal: Option<Vector3> = None;
+        let mut result = None;
 
         for surface in self.surfaces.iter() {
             let closest_intersection_of_surface = surface.closest_intersection(&ray);
@@ -104,15 +114,18 @@ impl Scene {
             match closest_intersection_of_surface {
                 None => continue,
                 Some((distance, normal)) => {
+                    if distance <= EPSILON.sqrt() {
+                        // Don't intersect the same point that the ray is leaving from.
+                        continue;
+                    }
                     // Ray intersects the surface.
                     if distance < closest_intersection {
                         closest_intersection = distance;
-                        //closest_surface = Some(surface);
-                        surface_normal = Some(normal);
+                        result = Some((ray.origin + closest_intersection * ray.direction, normal));
                     }
                 }
             }
         }
-        surface_normal
+        result
     }
 }

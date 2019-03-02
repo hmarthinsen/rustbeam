@@ -129,7 +129,13 @@ impl Surface for Sphere {
                 None
             } else {
                 // Ray intersects sphere.
-                let distance_to_intersection = origin_to_center_dot_dir - discriminant.sqrt();
+                let mut distance_to_intersection = origin_to_center_dot_dir - discriminant.sqrt();
+                if distance_to_intersection <= 0.0 {
+                    distance_to_intersection = origin_to_center_dot_dir + discriminant.sqrt();
+                    if distance_to_intersection <= 0.0 {
+                        return None;
+                    }
+                }
                 let normal =
                     (ray.direction * distance_to_intersection - origin_to_center).normalize();
                 Some((distance_to_intersection, normal))

@@ -42,7 +42,6 @@ mod tests {
     #[test]
     fn render_sphere() {
         let mut image = Image::new(1280, 720);
-        let filename = "test-data/test-data-out/test_render_sphere.png";
         let ref_filename = "test-data/test_render_sphere_ref.png";
 
         let mut scene = Scene::new();
@@ -55,8 +54,6 @@ mod tests {
 
         scene.render(&mut image);
 
-        image.save_png(filename);
-
         let image_data = image.to_srgba_vector();
         let ref_image_data = read_png(ref_filename);
         assert_eq!(image_data, ref_image_data);
@@ -65,7 +62,6 @@ mod tests {
     #[test]
     fn render_plane() {
         let mut image = Image::new(1280, 720);
-        let filename = "test-data/test-data-out/test_render_plane.png";
         let ref_filename = "test-data/test_render_plane_ref.png";
 
         let mut scene = Scene::new();
@@ -78,7 +74,26 @@ mod tests {
 
         scene.render(&mut image);
 
-        image.save_png(filename);
+        let image_data = image.to_srgba_vector();
+        let ref_image_data = read_png(ref_filename);
+        assert_eq!(image_data, ref_image_data);
+    }
+
+    #[test]
+    fn render_sphere_and_plane() {
+        let mut image = Image::new(1280, 720);
+        let ref_filename = "test-data/test_render_sphere_and_plane_ref.png";
+
+        let mut scene = Scene::new();
+
+        scene.add_surface(Box::new(Sphere::new((0.0, 2.0, 0.0), 0.5)));
+        scene.add_surface(Box::new(Plane::new((0.0, 0.0, 1.0), -0.5)));
+
+        scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
+        scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
+        scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
+
+        scene.render(&mut image);
 
         let image_data = image.to_srgba_vector();
         let ref_image_data = read_png(ref_filename);
