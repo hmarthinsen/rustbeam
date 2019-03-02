@@ -41,7 +41,7 @@ impl Camera {
 
 #[derive(Default)]
 pub struct Scene {
-    objects: Vec<Box<Surface>>,
+    surfaces: Vec<Box<Surface>>,
     camera: Camera,
 }
 
@@ -51,7 +51,7 @@ impl Scene {
     }
 
     pub fn add(&mut self, surface: Box<Surface>) {
-        self.objects.push(surface);
+        self.surfaces.push(surface);
     }
 
     pub fn render(self, image: &mut Image) {
@@ -72,35 +72,13 @@ impl Scene {
 
                 let ray = Ray::new(self.camera.position, direction);
 
-                let mut closest_intersection = INFINITY;
-                let mut closest_surface: Option<&Box<Surface>> = None;
-                let mut surface_normal: Option<Vector3> = None;
-
-                for surface in self.objects.iter() {
-                    let closest_intersection_of_surface = surface.closest_intersection(&ray);
-
-                    match closest_intersection_of_surface {
-                        None => continue,
-                        Some((distance, normal)) => {
-                            // Ray intersects the surface.
-                            if distance < closest_intersection {
-                                closest_intersection = distance;
-                                closest_surface = Some(surface);
-                                surface_normal = Some(normal);
-                            }
-                        }
-                    }
-                }
-
                 let mut rgb = (0.0, 0.0, 0.0);
-                match closest_surface {
+                match self.trace(ray) {
                     None => (),
-                    Some(_) => {
+                    Some(surface_normal) => {
                         let dir_to_light1 = Vector3::from((-1.0, -1.0, 1.0)).normalize();
                         let dir_to_light2 = Vector3::from((1.0, -1.0, 1.0)).normalize();
                         let dir_to_light3 = Vector3::from((0.0, -1.0, -1.0)).normalize();
-
-                        let surface_normal = surface_normal.unwrap();
 
                         rgb.0 = surface_normal.dot(dir_to_light1).max(0.0);
                         rgb.1 = surface_normal.dot(dir_to_light2).max(0.0);
@@ -110,5 +88,28 @@ impl Scene {
                 image.set_pixel(pixel_x, pixel_y, rgb);
             }
         }
+    }
+
+    fn trace(&self, ray: Ray) -> Option<Vector3> {
+        let mut closest_intersection = INFINITY;
+        //let mut closest_surface: Option<&Box<Surface>> = None;
+        let mut surface_normal: Option<Vector3> = None;
+
+        for surface in self.surfaces.iter() {
+            let closest_intersection_of_surface = surface.closest_intersection(&ray);
+
+            match closest_intersection_of_surface {
+                None => continue,
+                Some((distance, normal)) => {
+                    // Ray intersects the surface.
+                    if distance < closest_intersection {
+                        closest_intersection = distance;
+                        //closest_surface = Some(surface);
+                        surface_normal = Some(normal);
+                    }
+                }
+            }
+        }
+        surface_normal
     }
 }
