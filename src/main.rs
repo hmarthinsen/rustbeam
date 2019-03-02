@@ -29,11 +29,7 @@ pub fn main() {
 
     let texture_creator = canvas.texture_creator();
     let mut texture = texture_creator
-        .create_texture_streaming(
-            PixelFormatEnum::ABGR8888,
-            window_width,
-            window_height,
-        )
+        .create_texture_streaming(PixelFormatEnum::ABGR8888, window_width, window_height)
         .unwrap();
 
     let mut scene = Scene::new();

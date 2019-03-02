@@ -42,7 +42,10 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Vector3, direction: Vector3) -> Self {
-        Self { origin, direction: direction.normalize() }
+        Self {
+            origin,
+            direction: direction.normalize(),
+        }
     }
 }
 
