@@ -1,4 +1,8 @@
-use rustbeam::Image;
+#![warn(clippy::all, clippy::pedantic)]
+
+use rustbeam::image::Image;
+use rustbeam::scene::Scene;
+use rustbeam::surfaces::Sphere;
 use sdl2::{
     event::Event,
     keyboard::Keycode,
@@ -13,7 +17,7 @@ pub fn main() {
     let window_height = 720;
 
     let window = video_subsystem
-        .window("rust-sdl2 demo", window_width as u32, window_height as u32)
+        .window("rust-sdl2 demo", window_width, window_height)
         .position_centered()
         .build()
         .unwrap();
@@ -27,16 +31,24 @@ pub fn main() {
     let mut texture = texture_creator
         .create_texture_streaming(
             PixelFormatEnum::ABGR8888,
-            window_width as u32,
-            window_height as u32,
+            window_width,
+            window_height,
         )
         .unwrap();
 
-    let image = Image::new(window_width, window_height);
-    // image.render_sphere();
+    let mut scene = Scene::new();
+
+    scene.add(Sphere::new((-1.0, 5.0, 0.0), 1.5));
+    scene.add(Sphere::new((1.0, 5.0, 0.0), 1.0));
+
+    let mut image = Image::new(window_width as usize, window_height as usize);
+    scene.render(&mut image);
+
+    image.clamp();
+
     let srgba_vec = image.to_srgba_vector();
     texture
-        .update(None, srgba_vec.as_slice(), 4 * window_width)
+        .update(None, srgba_vec.as_slice(), 4 * window_width as usize)
         .unwrap();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
