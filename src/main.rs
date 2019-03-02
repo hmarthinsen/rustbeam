@@ -2,7 +2,7 @@
 
 use rustbeam::image::Image;
 use rustbeam::scene::Scene;
-use rustbeam::surfaces::Sphere;
+use rustbeam::surfaces::{Plane, Sphere};
 use sdl2::{
     event::Event,
     keyboard::Keycode,
@@ -34,8 +34,9 @@ pub fn main() {
 
     let mut scene = Scene::new();
 
-    scene.add(Sphere::new((-1.0, 5.0, 0.0), 1.5));
-    scene.add(Sphere::new((1.0, 5.0, 0.0), 1.0));
+    scene.add(Box::new(Sphere::new((-1.0, 5.0, 0.0), 1.5)));
+    scene.add(Box::new(Sphere::new((1.0, 5.0, 0.0), 1.0)));
+    scene.add(Box::new(Plane::new((0.0, 0.0, 1.0), -2.0)));
 
     let mut image = Image::new(window_width as usize, window_height as usize);
     scene.render(&mut image);

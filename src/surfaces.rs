@@ -56,6 +56,46 @@ impl BoundingBox {
     }
 }
 
+pub trait Surface {
+    /// Find the length along a ray to the first intersection between the ray
+    /// and the surface (if any). Also returns the normal of the surface in the
+    /// intersection.
+    fn closest_intersection(&self, ray: &Ray) -> Option<(f64, Vector3)>;
+}
+
+pub struct Plane {
+    normal_vec: Vector3,
+    distance_from_origin: f64,
+}
+
+impl Plane {
+    pub fn new<T: Into<Vector3>>(normal_vec: T, distance_from_origin: f64) -> Self {
+        Self {
+            normal_vec: normal_vec.into().normalize(),
+            distance_from_origin,
+        }
+    }
+}
+
+impl Surface for Plane {
+    fn closest_intersection(&self, ray: &Ray) -> Option<(f64, Vector3)> {
+        let ray_direction_dot_normal = ray.direction.dot(self.normal_vec);
+        if ray_direction_dot_normal == 0.0 {
+            None
+        } else {
+            // Ray intersects plane.
+            let distance_to_intersection = (self.distance_from_origin
+                - ray.origin.dot(self.normal_vec))
+                / ray_direction_dot_normal;
+            if distance_to_intersection > 0.0 {
+                Some((distance_to_intersection, self.normal_vec))
+            } else {
+                None
+            }
+        }
+    }
+}
+
 pub struct Sphere {
     pub center_pos: Vector3,
     /// In meters.
@@ -75,10 +115,10 @@ impl Sphere {
         let radius_vec = self.radius * Vector3::ones();
         BoundingBox::new(self.center_pos - radius_vec, self.center_pos + radius_vec)
     }
+}
 
-    /// Find the length along a ray to the first intersection between the ray
-    /// and the sphere (if any). Returns infinity if there is no intersection.
-    pub fn closest_intersection(&self, ray: &Ray) -> Option<f64> {
+impl Surface for Sphere {
+    fn closest_intersection(&self, ray: &Ray) -> Option<(f64, Vector3)> {
         if self.bounding_box().intersects(ray) {
             let origin_to_center = self.center_pos - ray.origin;
             let origin_to_center_dot_dir = origin_to_center.dot(ray.direction);
@@ -89,7 +129,10 @@ impl Sphere {
                 None
             } else {
                 // Ray intersects sphere.
-                Some(origin_to_center_dot_dir - discriminant.sqrt())
+                let distance_to_intersection = origin_to_center_dot_dir - discriminant.sqrt();
+                let normal =
+                    (ray.direction * distance_to_intersection - origin_to_center).normalize();
+                Some((distance_to_intersection, normal))
             }
         } else {
             // Ray doesn't intersect bounding box.
