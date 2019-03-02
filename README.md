@@ -5,4 +5,4 @@ I'm making a ray tracer in Rust. Watch it burn!
 
 Example image rendered with Rustbeam:
 
-![Sphere and three light sources](https://github.com/hmarthinsen/rustbeam/raw/master/test-data/test_render_sphere_ref.png "Sphere and three light sources")
+![Sphere, plane and two light sources](https://github.com/hmarthinsen/rustbeam/raw/master/test-data/test_render_sphere_and_plane_ref.png "Sphere, plane and two light sources")
