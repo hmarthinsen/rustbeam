@@ -35,9 +35,9 @@ pub fn main() {
 
     let mut scene = Scene::new();
 
-    scene.add_surface(Box::new(Sphere::new((-1.0, 5.0, 0.0), 1.5)));
-    scene.add_surface(Box::new(Sphere::new((1.0, 5.0, 0.0), 1.0)));
-    scene.add_surface(Box::new(Plane::new((0.0, 0.0, 1.0), -2.0)));
+    scene.add_surface(Sphere::new((-1.0, 5.0, 0.0), 1.5));
+    scene.add_surface(Sphere::new((1.0, 5.0, 0.0), 1.0));
+    scene.add_surface(Plane::new((0.0, 0.0, 1.0), -2.0));
 
     scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
     scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));

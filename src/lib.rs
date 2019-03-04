@@ -46,7 +46,7 @@ mod tests {
 
         let mut scene = Scene::new();
 
-        scene.add_surface(Box::new(Sphere::new((0.0, 2.0, 0.0), 0.5)));
+        scene.add_surface(Sphere::new((0.0, 2.0, 0.0), 0.5));
 
         scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
@@ -66,7 +66,7 @@ mod tests {
 
         let mut scene = Scene::new();
 
-        scene.add_surface(Box::new(Plane::new((0.0, 0.0, 1.0), -0.5)));
+        scene.add_surface(Plane::new((0.0, 0.0, 1.0), -0.5));
 
         scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
@@ -86,8 +86,8 @@ mod tests {
 
         let mut scene = Scene::new();
 
-        scene.add_surface(Box::new(Sphere::new((0.0, 2.0, 0.0), 0.5)));
-        scene.add_surface(Box::new(Plane::new((0.0, 0.0, 1.0), -0.5)));
+        scene.add_surface(Sphere::new((0.0, 2.0, 0.0), 0.5));
+        scene.add_surface(Plane::new((0.0, 0.0, 1.0), -0.5));
 
         scene.add_light(Sun::new((1.0, 0.0, 0.0), (1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));

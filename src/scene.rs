@@ -41,19 +41,19 @@ impl Camera {
 }
 
 #[derive(Default)]
-pub struct Scene {
-    surfaces: Vec<Box<Surface>>,
+pub struct Scene<'a> {
+    surfaces: Vec<Box<dyn Surface + 'a>>,
     camera: Camera,
     lights: Vec<Sun>,
 }
 
-impl Scene {
+impl<'a> Scene<'a> {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn add_surface(&mut self, surface: Box<Surface>) {
-        self.surfaces.push(surface);
+    pub fn add_surface(&mut self, surface: impl Surface + 'a) {
+        self.surfaces.push(Box::new(surface));
     }
 
     pub fn add_light(&mut self, light: Sun) {
