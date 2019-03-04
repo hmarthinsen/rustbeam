@@ -1,8 +1,11 @@
-use crate::image::Image;
+use crate::image::Pixel;
 use crate::lights::Sun;
 use crate::math::{Ray, UnitQuaternion, Vector3};
 use crate::surfaces::Surface;
-use std::f64::{EPSILON, INFINITY};
+use std::{
+    f64::{EPSILON, INFINITY},
+    sync::mpsc,
+};
 
 struct Camera {
     position: Vector3,
@@ -42,7 +45,7 @@ impl Camera {
 
 #[derive(Default)]
 pub struct Scene<'a> {
-    surfaces: Vec<Box<dyn Surface + 'a>>,
+    surfaces: Vec<Box<Surface + Send + 'a>>,
     camera: Camera,
     lights: Vec<Sun>,
 }
@@ -52,7 +55,7 @@ impl<'a> Scene<'a> {
         Self::default()
     }
 
-    pub fn add_surface(&mut self, surface: impl Surface + 'a) {
+    pub fn add_surface(&mut self, surface: impl Surface + Send + 'a) {
         self.surfaces.push(Box::new(surface));
     }
 
@@ -60,8 +63,7 @@ impl<'a> Scene<'a> {
         self.lights.push(light);
     }
 
-    pub fn render(self, image: &mut Image) {
-        let (width, height) = image.get_size();
+    pub fn render(self, width: usize, height: usize, sender: mpsc::Sender<(usize, usize, Pixel)>) {
         let pixel_size = self.camera.screen_width / width as f64;
 
         let center_of_screen = self.camera.direction() * self.camera.distance_to_screen;
@@ -95,7 +97,7 @@ impl<'a> Scene<'a> {
                         }
                     }
                 }
-                image.set_pixel(pixel_x, pixel_y, rgb);
+                sender.send((pixel_x, pixel_y, rgb.into())).unwrap();
             }
         }
     }

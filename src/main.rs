@@ -9,6 +9,7 @@ use sdl2::{
     keyboard::Keycode,
     pixels::{Color, PixelFormatEnum},
 };
+use std::{sync::mpsc, thread};
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -44,14 +45,11 @@ pub fn main() {
     scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
     let mut image = Image::new(window_width as usize, window_height as usize);
-    scene.render(&mut image);
 
-    image.clamp();
-
-    let srgba_vec = image.to_srgba_vector();
-    texture
-        .update(None, srgba_vec.as_slice(), 4 * window_width as usize)
-        .unwrap();
+    let (sender, receiver) = mpsc::channel();
+    thread::spawn(move || {
+        scene.render(window_width as usize, window_height as usize, sender);
+    });
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
@@ -67,9 +65,21 @@ pub fn main() {
             }
         }
 
-        canvas.copy(&texture, None, None).unwrap();
+        let mut received_pixels = receiver.try_iter().peekable();
+
+        if received_pixels.peek().is_some() {
+            image.update(received_pixels);
+            let srgba_vec = image.to_srgba_vector();
+            texture
+                .update(None, srgba_vec.as_slice(), 4 * window_width as usize)
+                .unwrap();
+
+            canvas.copy(&texture, None, None).unwrap();
+        }
+
         canvas.present();
     }
 
+    image.clamp();
     image.save_png("test-data/test-data-out/test.png");
 }

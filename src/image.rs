@@ -48,23 +48,30 @@ pub struct Image {
     width: usize,
     height: usize,
     pixels: Vec<Pixel>,
+    srgba_data: Vec<u8>,
 }
 
 impl Image {
     /// Make a new `Image` of width `width` and height `height`.
     pub fn new(width: usize, height: usize) -> Self {
         let num_pixels = width * height;
-        let mut pixels = Vec::with_capacity(num_pixels);
         let black_pixel = Pixel::default();
 
+        let pixels = vec![black_pixel; num_pixels];
+        let mut srgba_data = Vec::with_capacity(num_pixels * 4);
+
         for _ in 0..num_pixels {
-            pixels.push(black_pixel);
+            srgba_data.push(0);
+            srgba_data.push(0);
+            srgba_data.push(0);
+            srgba_data.push(255);
         }
 
         Self {
             width,
             height,
             pixels,
+            srgba_data,
         }
     }
 
@@ -77,21 +84,26 @@ impl Image {
         assert!(x < self.width);
         assert!(y < self.height);
 
-        self.pixels[self.width * y + x] = pixel.into();
+        let offset = self.width * y + x;
+
+        let pixel = pixel.into();
+        self.pixels[offset] = pixel;
+
+        self.srgba_data[offset * 4] = Image::linear_to_srgb(pixel.r);
+        self.srgba_data[offset * 4 + 1] = Image::linear_to_srgb(pixel.g);
+        self.srgba_data[offset * 4 + 2] = Image::linear_to_srgb(pixel.b);
+        self.srgba_data[offset * 4 + 3] = (pixel.a * 255.0).round() as u8;
+    }
+
+    pub fn update(&mut self, pixels: impl Iterator<Item = (usize, usize, Pixel)>) {
+        for (x, y, pixel) in pixels {
+            self.set_pixel(x, y, pixel);
+        }
     }
 
     /// Convert the image to a vector of gamma corrected SRGB data.
-    pub fn to_srgba_vector(&self) -> Vec<u8> {
-        let mut srgba_data = Vec::with_capacity(self.width * self.height * 4);
-
-        for &pixel in self.pixels.iter() {
-            srgba_data.push(Image::linear_to_srgb(pixel.r));
-            srgba_data.push(Image::linear_to_srgb(pixel.g));
-            srgba_data.push(Image::linear_to_srgb(pixel.b));
-            srgba_data.push((pixel.a * 255.0).round() as u8);
-        }
-
-        srgba_data
+    pub fn to_srgba_vector(&self) -> &Vec<u8> {
+        &self.srgba_data
     }
 
     /// Save the image as a png file.

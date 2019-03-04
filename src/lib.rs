@@ -10,7 +10,7 @@ mod tests {
     use crate::lights::Sun;
     use crate::scene::Scene;
     use crate::surfaces::{Plane, Sphere};
-    use std::fs::File;
+    use std::{fs::File, sync::mpsc, thread};
 
     /// Read a png file into a vector of SRGB data.
     fn read_png(filename: &str) -> Vec<u8> {
@@ -36,12 +36,14 @@ mod tests {
 
         let image_data = image.to_srgba_vector();
         let ref_image_data = read_png(ref_filename);
-        assert_eq!(image_data, ref_image_data);
+        assert_eq!(*image_data, ref_image_data);
     }
 
     #[test]
     fn render_sphere() {
-        let mut image = Image::new(1280, 720);
+        let image_width = 1280;
+        let image_height = 720;
+        let mut image = Image::new(image_width, image_height);
         let ref_filename = "test-data/test_render_sphere_ref.png";
 
         let mut scene = Scene::new();
@@ -52,16 +54,24 @@ mod tests {
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
-        scene.render(&mut image);
+        let (sender, receiver) = mpsc::channel();
+        thread::spawn(move || {
+            scene.render(image_width as usize, image_height as usize, sender);
+        });
+
+        let received_pixels = receiver.iter();
+        image.update(received_pixels);
 
         let image_data = image.to_srgba_vector();
         let ref_image_data = read_png(ref_filename);
-        assert_eq!(image_data, ref_image_data);
+        assert_eq!(*image_data, ref_image_data);
     }
 
     #[test]
     fn render_plane() {
-        let mut image = Image::new(1280, 720);
+        let image_width = 1280;
+        let image_height = 720;
+        let mut image = Image::new(image_width, image_height);
         let ref_filename = "test-data/test_render_plane_ref.png";
 
         let mut scene = Scene::new();
@@ -72,16 +82,24 @@ mod tests {
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
-        scene.render(&mut image);
+        let (sender, receiver) = mpsc::channel();
+        thread::spawn(move || {
+            scene.render(image_width as usize, image_height as usize, sender);
+        });
+
+        let received_pixels = receiver.iter();
+        image.update(received_pixels);
 
         let image_data = image.to_srgba_vector();
         let ref_image_data = read_png(ref_filename);
-        assert_eq!(image_data, ref_image_data);
+        assert_eq!(*image_data, ref_image_data);
     }
 
     #[test]
     fn render_sphere_and_plane() {
-        let mut image = Image::new(1280, 720);
+        let image_width = 1280;
+        let image_height = 720;
+        let mut image = Image::new(image_width, image_height);
         let ref_filename = "test-data/test_render_sphere_and_plane_ref.png";
 
         let mut scene = Scene::new();
@@ -93,10 +111,16 @@ mod tests {
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
-        scene.render(&mut image);
+        let (sender, receiver) = mpsc::channel();
+        thread::spawn(move || {
+            scene.render(image_width as usize, image_height as usize, sender);
+        });
+
+        let received_pixels = receiver.iter();
+        image.update(received_pixels);
 
         let image_data = image.to_srgba_vector();
         let ref_image_data = read_png(ref_filename);
-        assert_eq!(image_data, ref_image_data);
+        assert_eq!(*image_data, ref_image_data);
     }
 }
