@@ -1,3 +1,7 @@
+//! Module containing the scene.
+//!
+//! This module performs the actual rendering.
+
 use crate::image::Pixel;
 use crate::lights::Sun;
 use crate::math::{Ray, UnitQuaternion, Vector3};
@@ -7,6 +11,9 @@ use std::{
     sync::mpsc,
 };
 
+/// The camera determines from which direction the scene is rendered. The
+/// default camera is located at the origin, looking along the y-axis, with up
+/// along the z-axis.
 struct Camera {
     position: Vector3,
     orientation: UnitQuaternion,
@@ -15,8 +22,6 @@ struct Camera {
 }
 
 impl Default for Camera {
-    /// The default camera is located at the origin, looking along the y-axis,
-    /// with up along the z-axis.
     fn default() -> Self {
         Self {
             position: Vector3::zero(),
@@ -28,21 +33,26 @@ impl Default for Camera {
 }
 
 impl Camera {
+    /// Find the unit vector that points up when viewed through the camera.
     fn up(&self) -> Vector3 {
         let ref_up = Vector3::k();
         ref_up.rotate(self.orientation)
     }
 
+    /// Find the unit vector that points through the middle of the camera.
     fn direction(&self) -> Vector3 {
         let ref_dir = Vector3::j();
         ref_dir.rotate(self.orientation)
     }
 
+    /// Find the unit vector that points right when viewed through the camera.
     fn right(&self) -> Vector3 {
         self.direction().cross(self.up())
     }
 }
 
+/// A `Scene` contains the camera, light sources, and surfaces that are to be
+/// rendered.
 #[derive(Default)]
 pub struct Scene<'a> {
     surfaces: Vec<Box<Surface + Send + 'a>>,
@@ -51,6 +61,7 @@ pub struct Scene<'a> {
 }
 
 impl<'a> Scene<'a> {
+    /// Make an empty scene with a default camera.
     pub fn new() -> Self {
         Self::default()
     }
@@ -63,6 +74,9 @@ impl<'a> Scene<'a> {
         self.lights.push(light);
     }
 
+    /// Render the scene to an image of size `width` x `height`. The `sender`
+    /// sends each rendered pixel together with its x-y-coordinate through the
+    /// channel.
     pub fn render(self, width: usize, height: usize, sender: mpsc::Sender<(usize, usize, Pixel)>) {
         let pixel_size = self.camera.screen_width / width as f64;
 
@@ -107,7 +121,6 @@ impl<'a> Scene<'a> {
     /// element is the intersection, and the second is the normal vector.
     fn trace(&self, ray: Ray) -> Option<(Vector3, Vector3)> {
         let mut closest_intersection = INFINITY;
-        //let mut closest_surface: Option<&Box<Surface>> = None;
         let mut result = None;
 
         for surface in self.surfaces.iter() {
@@ -117,6 +130,7 @@ impl<'a> Scene<'a> {
                 None => continue,
                 Some((distance, normal)) => {
                     if distance <= EPSILON.sqrt() {
+                        // TODO: Is square root of machine epsilon a good choice?
                         // Don't intersect the same point that the ray is leaving from.
                         continue;
                     }

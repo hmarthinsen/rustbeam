@@ -1,3 +1,5 @@
+//! Module for working with images and pixels.
+
 use crate::math::Vector3;
 use png::HasParameters;
 use std::fs::File;
@@ -43,7 +45,7 @@ impl From<Vector3> for Pixel {
     }
 }
 
-/// An image containing `Pixel`s.
+/// An image containing `Pixel`s. Internally, it also contains SRGBA data.
 pub struct Image {
     width: usize,
     height: usize,
@@ -52,7 +54,6 @@ pub struct Image {
 }
 
 impl Image {
-    /// Make a new `Image` of width `width` and height `height`.
     pub fn new(width: usize, height: usize) -> Self {
         let num_pixels = width * height;
         let black_pixel = Pixel::default();
@@ -75,11 +76,13 @@ impl Image {
         }
     }
 
+    /// Return a tuple containing the width and height of the image.
     pub fn get_size(&self) -> (usize, usize) {
         (self.width, self.height)
     }
 
-    /// Set pixel at coordinate (`x`, `y`).
+    /// Set pixel at coordinate (`x`, `y`). The functions updates both the
+    /// vector of `Pixel`s and the vector of SRGBA data.
     pub fn set_pixel<T: Into<Pixel>>(&mut self, x: usize, y: usize, pixel: T) {
         assert!(x < self.width);
         assert!(y < self.height);
@@ -95,20 +98,23 @@ impl Image {
         self.srgba_data[offset * 4 + 3] = (pixel.a * 255.0).round() as u8;
     }
 
+    /// Update pixels of the image. `pixels` is an iterator that yields tuples
+    /// containing the x- and y-coordinates, and the `Pixel` that is to be
+    /// written into the image.
     pub fn update(&mut self, pixels: impl Iterator<Item = (usize, usize, Pixel)>) {
         for (x, y, pixel) in pixels {
             self.set_pixel(x, y, pixel);
         }
     }
 
-    /// Convert the image to a vector of gamma corrected SRGB data.
-    pub fn to_srgba_vector(&self) -> &Vec<u8> {
+    /// Get the SRGBA data vector. These data are gamma corrected.
+    pub fn get_srgba_vector(&self) -> &Vec<u8> {
         &self.srgba_data
     }
 
     /// Save the image as a png file.
     pub fn save_png(&self, filename: &str) {
-        let srgba_vector = self.to_srgba_vector();
+        let srgba_vector = self.get_srgba_vector();
         let pixel_data = srgba_vector.as_slice();
 
         let png_file = File::create(filename).unwrap();
@@ -151,7 +157,8 @@ impl Image {
         (min, max)
     }
 
-    /// Map minimum color to 0 and maximum color to 1.
+    /// Linearly map minimum color to 0 and maximum color to 1. Doesn't update
+    /// the SRGBA data.
     pub fn normalize(&mut self) {
         let (min, max) = self.min_max();
         let recip_range = 1.0 / (max - min);
@@ -163,7 +170,8 @@ impl Image {
         }
     }
 
-    /// Clamp color to between 0 and 1.
+    /// Clamp color to between 0 and 1 for the whole image. Doesn't update the
+    /// SRGBA data.
     pub fn clamp(&mut self) {
         for pixel in self.pixels.iter_mut() {
             pixel.r = pixel.r.min(1.0).max(0.0);
@@ -172,8 +180,8 @@ impl Image {
         }
     }
 
-    /// Convert color from linear color space to SRGB. `color` should be
-    /// between 0 and 1.
+    /// Convert color from linear color space to SRGB. `color` must be between 0
+    /// and 1.
     fn linear_to_srgb(color: f64) -> u8 {
         let srgb = if color < 0.003_130_8 {
             12.92 * color

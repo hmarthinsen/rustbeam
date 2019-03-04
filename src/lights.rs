@@ -1,7 +1,12 @@
+//! Module containing different light sources.
+
 use crate::math::Vector3;
 
+/// A light source emitting parallel light rays from a specified direction.
 pub struct Sun {
+    /// The color of the light rays, in linear RGB.
     pub color: Vector3,
+    /// The direction the rays point in. Must be a unit vector.
     pub direction: Vector3,
 }
 

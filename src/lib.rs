@@ -34,7 +34,7 @@ mod tests {
 
         image.save_png(filename);
 
-        let image_data = image.to_srgba_vector();
+        let image_data = image.get_srgba_vector();
         let ref_image_data = read_png(ref_filename);
         assert_eq!(*image_data, ref_image_data);
     }
@@ -62,7 +62,7 @@ mod tests {
         let received_pixels = receiver.iter();
         image.update(received_pixels);
 
-        let image_data = image.to_srgba_vector();
+        let image_data = image.get_srgba_vector();
         let ref_image_data = read_png(ref_filename);
         assert_eq!(*image_data, ref_image_data);
     }
@@ -90,7 +90,7 @@ mod tests {
         let received_pixels = receiver.iter();
         image.update(received_pixels);
 
-        let image_data = image.to_srgba_vector();
+        let image_data = image.get_srgba_vector();
         let ref_image_data = read_png(ref_filename);
         assert_eq!(*image_data, ref_image_data);
     }
@@ -119,7 +119,7 @@ mod tests {
         let received_pixels = receiver.iter();
         image.update(received_pixels);
 
-        let image_data = image.to_srgba_vector();
+        let image_data = image.get_srgba_vector();
         let ref_image_data = read_png(ref_filename);
         assert_eq!(*image_data, ref_image_data);
     }

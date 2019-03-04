@@ -1,3 +1,5 @@
+//! Module containing the different surfaces that can be rendered.
+
 use crate::math::{Interval, Ray, Vector3};
 use std::f64::{INFINITY, NEG_INFINITY};
 
@@ -56,6 +58,7 @@ impl BoundingBox {
     }
 }
 
+/// A `Surface` can intersect a `Ray`.
 pub trait Surface {
     /// Find the length along a ray to the first intersection between the ray
     /// and the surface (if any). Also returns the normal of the surface in the
@@ -111,6 +114,7 @@ impl Sphere {
         }
     }
 
+    /// Compute the minimal bounding box of the sphere.
     fn bounding_box(&self) -> BoundingBox {
         let radius_vec = self.radius * Vector3::ones();
         BoundingBox::new(self.center_pos - radius_vec, self.center_pos + radius_vec)

@@ -1,4 +1,5 @@
-//! Module containing mathematical structs.
+//! Module containing carious mathematical structs.
+
 use std::ops::{Add, AddAssign, Mul, Neg, Sub};
 
 /// A closed interval in the set of real numbers.
@@ -23,6 +24,8 @@ impl Interval {
         self.endpoints
     }
 
+    /// Compute the intersection of two closed intervals. If the result is the
+    /// empty set, then `None` is returned.
     pub fn intersection(self, other: Interval) -> Option<Interval> {
         let lower = self.endpoints.0.max(other.endpoints.0);
         let upper = self.endpoints.1.min(other.endpoints.1);
@@ -35,6 +38,8 @@ impl Interval {
     }
 }
 
+/// A ray that is cast from `origin` in the `direction` direction, which must
+/// be a unit vector.
 pub struct Ray {
     pub origin: Vector3,
     pub direction: Vector3,
@@ -49,6 +54,7 @@ impl Ray {
     }
 }
 
+/// Unit quaternions are used for representing rotations.
 #[derive(Clone, Copy)]
 pub struct UnitQuaternion {
     real: f64,
@@ -63,6 +69,9 @@ impl UnitQuaternion {
         }
     }
 
+    /// Make a new unit quaternion that represents the rotation of a vector
+    /// around a `rotation_axis` vector. The `angle` is in radians, using the
+    /// right-hand rule.
     pub fn from_axis_angle<T: Into<Vector3>>(rotation_axis: T, angle: f64) -> Self {
         let (sin, cos) = (0.5 * angle).sin_cos();
         Self {
@@ -71,22 +80,27 @@ impl UnitQuaternion {
         }
     }
 
+    /// The identity quaternion.
     pub fn id() -> Self {
         Self::new(1.0, (0.0, 0.0, 0.0))
     }
 
+    /// The unit quaternion "i".
     pub fn i() -> Self {
         Self::new(0.0, (1.0, 0.0, 0.0))
     }
 
+    /// The unit quaternion "j".
     pub fn j() -> Self {
         Self::new(0.0, (0.0, 1.0, 0.0))
     }
 
+    /// The unit quaternion "k".
     pub fn k() -> Self {
         Self::new(0.0, (0.0, 0.0, 1.0))
     }
 
+    /// Compute the multiplicative inverse of the quaternion.
     fn invert(mut self) -> Self {
         self.imag = -self.imag;
         self
@@ -117,22 +131,27 @@ impl Vector3 {
         Self { x, y, z }
     }
 
+    /// The unit vector in the x-direction.
     pub fn i() -> Self {
         Self::new(1.0, 0.0, 0.0)
     }
 
+    /// The unit vector in the y-direction.
     pub fn j() -> Self {
         Self::new(0.0, 1.0, 0.0)
     }
 
+    /// The unit vector in the z-direction.
     pub fn k() -> Self {
         Self::new(0.0, 0.0, 1.0)
     }
 
+    /// The zero-vector.
     pub fn zero() -> Self {
         Self::new(0.0, 0.0, 0.0)
     }
 
+    /// The vector with 1 in every component.
     pub fn ones() -> Self {
         Self::new(1.0, 1.0, 1.0)
     }
@@ -142,6 +161,7 @@ impl Vector3 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
+    /// Cross product of two vectors.
     pub fn cross(self, other: Self) -> Self {
         Self::new(
             self.y * other.z - self.z * other.y,
@@ -150,7 +170,7 @@ impl Vector3 {
         )
     }
 
-    ///Square of norm of the vector.
+    /// The square of the norm of the vector.
     pub fn norm2(self) -> f64 {
         self.dot(self)
     }
@@ -160,6 +180,8 @@ impl Vector3 {
         self.norm2().sqrt()
     }
 
+    /// Scale the vector so that it becomes a unit vector. If the vector is
+    /// zero, then nothing is done.
     pub fn normalize(self) -> Self {
         if !self.is_zero() {
             let recip_norm = 1.0 / self.norm();
@@ -173,6 +195,7 @@ impl Vector3 {
         self.x == 0.0 && self.y == 0.0 && self.z == 0.0
     }
 
+    /// Rotate the vector using a unit quaternion.
     pub fn rotate(self, rotation: UnitQuaternion) -> Self {
         let q = UnitQuaternion::new(0.0, self);
         let q_rotated = rotation * q * rotation.invert();
