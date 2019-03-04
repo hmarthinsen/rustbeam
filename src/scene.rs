@@ -68,13 +68,13 @@ impl<'a> Scene<'a> {
 
         let center_of_screen = self.camera.direction() * self.camera.distance_to_screen;
 
-        for pixel_x in 0..width {
-            let delta_x =
-                (pixel_x as f64 - 0.5 * (width - 1) as f64) * pixel_size * self.camera.right();
+        for pixel_y in 0..height {
+            let delta_y =
+                -(pixel_y as f64 - 0.5 * (height - 1) as f64) * pixel_size * self.camera.up();
 
-            for pixel_y in 0..height {
-                let delta_y =
-                    -(pixel_y as f64 - 0.5 * (height - 1) as f64) * pixel_size * self.camera.up();
+            for pixel_x in 0..width {
+                let delta_x =
+                    (pixel_x as f64 - 0.5 * (width - 1) as f64) * pixel_size * self.camera.right();
 
                 let direction = center_of_screen + delta_x + delta_y;
 
