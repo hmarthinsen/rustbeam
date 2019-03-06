@@ -6,5 +6,6 @@ edition = "2018"
 build = "build.rs"
 
 [dependencies]
+num_cpus = "1.10"
 png = "0.14"
 sdl2 = "0.32"

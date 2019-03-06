@@ -55,7 +55,7 @@ impl Camera {
 /// rendered.
 #[derive(Default)]
 pub struct Scene<'a> {
-    surfaces: Vec<Box<Surface + Send + 'a>>,
+    surfaces: Vec<Box<Surface + Send + Sync + 'a>>,
     camera: Camera,
     lights: Vec<Sun>,
 }
@@ -66,7 +66,7 @@ impl<'a> Scene<'a> {
         Self::default()
     }
 
-    pub fn add_surface(&mut self, surface: impl Surface + Send + 'a) {
+    pub fn add_surface(&mut self, surface: impl Surface + Send + Sync + 'a) {
         self.surfaces.push(Box::new(surface));
     }
 
@@ -76,13 +76,25 @@ impl<'a> Scene<'a> {
 
     /// Render the scene to an image of size `width` x `height`. The `sender`
     /// sends each rendered pixel together with its x-y-coordinate through the
-    /// channel.
-    pub fn render(self, width: usize, height: usize, sender: mpsc::Sender<(usize, usize, Pixel)>) {
+    /// channel. The rendering is split among `num_threads` threads, where
+    /// 0 <= `thread_id` < `num_threads`. `thread_id` determines which lines of
+    /// the image are rendered.
+    pub fn render(
+        &self,
+        width: usize,
+        height: usize,
+        sender: mpsc::Sender<(usize, usize, Pixel)>,
+        thread_id: usize,
+        num_threads: usize,
+    ) {
         let pixel_size = self.camera.screen_width / width as f64;
 
         let center_of_screen = self.camera.direction() * self.camera.distance_to_screen;
 
         for pixel_y in 0..height {
+            if (pixel_y + thread_id) % num_threads != 0 {
+                continue;
+            }
             let delta_y =
                 -(pixel_y as f64 - 0.5 * (height - 1) as f64) * pixel_size * self.camera.up();
 

@@ -9,7 +9,10 @@ use sdl2::{
     keyboard::Keycode,
     pixels::{Color, PixelFormatEnum},
 };
-use std::{sync::mpsc, thread};
+use std::{
+    sync::{mpsc, Arc},
+    thread,
+};
 
 pub fn main() {
     // Initialize SDL and make a window that can be drawn into.
@@ -54,9 +57,21 @@ pub fn main() {
     // complete, it is sent through a channel to the main thread and written
     // into the image.
     let (sender, receiver) = mpsc::channel();
-    thread::spawn(move || {
-        scene.render(window_width as usize, window_height as usize, sender);
-    });
+    let num_threads = num_cpus::get();
+    let scene_arc = Arc::new(scene);
+    for thread_id in 0..num_threads {
+        let sender_clone = sender.clone();
+        let scene_clone = scene_arc.clone();
+        thread::spawn(move || {
+            scene_clone.render(
+                window_width as usize,
+                window_height as usize,
+                sender_clone,
+                thread_id,
+                num_threads,
+            );
+        });
+    }
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
