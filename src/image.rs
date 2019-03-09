@@ -81,8 +81,8 @@ impl Image {
         (self.width, self.height)
     }
 
-    /// Set pixel at coordinate (`x`, `y`). The functions updates both the
-    /// vector of `Pixel`s and the vector of SRGBA data.
+    /// Set pixel at coordinate (`x`, `y`). The function updates both the vector
+    /// of `Pixel`s and the vector of SRGBA data.
     pub fn set_pixel<T: Into<Pixel>>(&mut self, x: usize, y: usize, pixel: T) {
         assert!(x < self.width);
         assert!(y < self.height);
