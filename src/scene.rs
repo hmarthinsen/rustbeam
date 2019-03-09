@@ -8,7 +8,12 @@ use crate::math::{Ray, UnitQuaternion, Vector3};
 use crate::surfaces::Surface;
 use std::{
     f64::{EPSILON, INFINITY},
-    sync::mpsc,
+    sync::{
+        mpsc,
+        mpsc::{Receiver, Sender},
+        Arc,
+    },
+    thread,
 };
 
 /// The camera determines from which direction the scene is rendered. The
@@ -54,19 +59,19 @@ impl Camera {
 /// A `Scene` contains the camera, light sources, and surfaces that are to be
 /// rendered.
 #[derive(Default)]
-pub struct Scene<'a> {
-    surfaces: Vec<Box<Surface + Send + Sync + 'a>>,
+pub struct Scene {
+    surfaces: Vec<Box<Surface + Send + Sync>>,
     camera: Camera,
     lights: Vec<Sun>,
 }
 
-impl<'a> Scene<'a> {
+impl Scene {
     /// Make an empty scene with a default camera.
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn add_surface(&mut self, surface: impl Surface + Send + Sync + 'a) {
+    pub fn add_surface(&mut self, surface: impl Surface + Send + Sync + 'static) {
         self.surfaces.push(Box::new(surface));
     }
 
@@ -74,16 +79,16 @@ impl<'a> Scene<'a> {
         self.lights.push(light);
     }
 
-    /// Render the scene to an image of size `width` x `height`. The `sender`
-    /// sends each rendered pixel together with its x-y-coordinate through the
-    /// channel. The rendering is split among `num_threads` threads, where
-    /// 0 <= `thread_id` < `num_threads`. `thread_id` determines which lines of
-    /// the image are rendered.
+    /// Render the scene to an image of size `width` x `height`. Only a
+    /// part of the image is actually rendered, based on `thread_id` and
+    /// `num_threads`. The function should be called in `num_threads` separate
+    /// threads, where all the `sender`s send to the same receiver. The `sender`
+    /// sends rendered pixels together with x-y-coordinates through a channel.
     pub fn render(
         &self,
         width: usize,
         height: usize,
-        sender: mpsc::Sender<(usize, usize, Pixel)>,
+        sender: Sender<(usize, usize, Pixel)>,
         thread_id: usize,
         num_threads: usize,
     ) {
@@ -93,8 +98,10 @@ impl<'a> Scene<'a> {
 
         for pixel_y in 0..height {
             if (pixel_y + thread_id) % num_threads != 0 {
+                // Skip the line.
                 continue;
             }
+
             let delta_y =
                 -(pixel_y as f64 - 0.5 * (height - 1) as f64) * pixel_size * self.camera.up();
 
@@ -126,6 +133,42 @@ impl<'a> Scene<'a> {
                 sender.send((pixel_x, pixel_y, rgb.into())).unwrap();
             }
         }
+    }
+
+    /// Spawn multiple threads for rendering the scene. The number of threads
+    /// spawned is one less than the number of CPU cores. Each thread renders a
+    /// subset of the pixels of the image. When a pixel is finished, it is sent
+    /// through a channel. The receiving end of the channel is returned from
+    /// this function.
+    pub fn spawn_render_threads(
+        self,
+        window_width: usize,
+        window_height: usize,
+    ) -> Receiver<(usize, usize, Pixel)> {
+        let (sender, receiver) = mpsc::channel();
+        let num_threads = num_cpus::get() - 1;
+        let scene_arc = Arc::new(self);
+        for thread_id in 1..num_threads {
+            let scene_clone = scene_arc.clone();
+            let sender_clone = sender.clone();
+
+            thread::spawn(move || {
+                scene_clone.render(
+                    window_width,
+                    window_height,
+                    sender_clone,
+                    thread_id,
+                    num_threads,
+                );
+            });
+        }
+
+        let scene_clone = scene_arc.clone();
+        thread::spawn(move || {
+            scene_clone.render(window_width, window_height, sender, 0, num_threads);
+        });
+
+        receiver
     }
 
     /// Trace a ray until it intersects a surface in the scene. If nothing is

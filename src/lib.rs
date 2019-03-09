@@ -10,7 +10,7 @@ mod tests {
     use crate::lights::Sun;
     use crate::scene::Scene;
     use crate::surfaces::{Plane, Sphere};
-    use std::{fs::File, sync::mpsc, thread};
+    use std::fs::File;
 
     /// Read a png file into a vector of SRGB data.
     fn read_png(filename: &str) -> Vec<u8> {
@@ -54,13 +54,8 @@ mod tests {
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
-        let (sender, receiver) = mpsc::channel();
-        thread::spawn(move || {
-            scene.render(image_width as usize, image_height as usize, sender);
-        });
-
-        let received_pixels = receiver.iter();
-        image.update(received_pixels);
+        let receiver = scene.spawn_render_threads(image_width, image_height);
+        image.update(receiver.iter());
 
         let image_data = image.get_srgba_vector();
         let ref_image_data = read_png(ref_filename);
@@ -82,13 +77,8 @@ mod tests {
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
-        let (sender, receiver) = mpsc::channel();
-        thread::spawn(move || {
-            scene.render(image_width as usize, image_height as usize, sender);
-        });
-
-        let received_pixels = receiver.iter();
-        image.update(received_pixels);
+        let receiver = scene.spawn_render_threads(image_width, image_height);
+        image.update(receiver.iter());
 
         let image_data = image.get_srgba_vector();
         let ref_image_data = read_png(ref_filename);
@@ -111,13 +101,8 @@ mod tests {
         scene.add_light(Sun::new((0.0, 1.0, 0.0), (-1.0, 1.0, -1.0)));
         scene.add_light(Sun::new((0.0, 0.0, 1.0), (0.0, 1.0, 1.0)));
 
-        let (sender, receiver) = mpsc::channel();
-        thread::spawn(move || {
-            scene.render(image_width as usize, image_height as usize, sender);
-        });
-
-        let received_pixels = receiver.iter();
-        image.update(received_pixels);
+        let receiver = scene.spawn_render_threads(image_width, image_height);
+        image.update(receiver.iter());
 
         let image_data = image.get_srgba_vector();
         let ref_image_data = read_png(ref_filename);

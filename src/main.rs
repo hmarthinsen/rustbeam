@@ -9,10 +9,6 @@ use sdl2::{
     keyboard::Keycode,
     pixels::{Color, PixelFormatEnum},
 };
-use std::{
-    sync::{mpsc, Arc},
-    thread,
-};
 
 pub fn main() {
     // Initialize SDL and make a window that can be drawn into.
@@ -53,25 +49,10 @@ pub fn main() {
     // The rendered pixels are written to this image.
     let mut image = Image::new(window_width as usize, window_height as usize);
 
-    // Rendering of the scene is done in a separate thread. When each pixel is
+    // Rendering of the scene is done in separate threads. When each pixel is
     // complete, it is sent through a channel to the main thread and written
     // into the image.
-    let (sender, receiver) = mpsc::channel();
-    let num_threads = num_cpus::get();
-    let scene_arc = Arc::new(scene);
-    for thread_id in 0..num_threads {
-        let sender_clone = sender.clone();
-        let scene_clone = scene_arc.clone();
-        thread::spawn(move || {
-            scene_clone.render(
-                window_width as usize,
-                window_height as usize,
-                sender_clone,
-                thread_id,
-                num_threads,
-            );
-        });
-    }
+    let receiver = scene.spawn_render_threads(window_width as usize, window_height as usize);
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
@@ -90,13 +71,13 @@ pub fn main() {
             }
         }
 
-        let mut received_pixels = receiver.try_iter().peekable();
+        let mut receiver_try_iter = receiver.try_iter().peekable();
 
-        if received_pixels.peek().is_some() {
+        if receiver_try_iter.peek().is_some() {
             // If there are any pixels that have been rendered and that have
             // been sent through the channel, write them to the image, and then
             // update the texture that is drawn on the screen.
-            image.update(received_pixels);
+            image.update(receiver_try_iter);
             let srgba_vec = image.get_srgba_vector();
             texture
                 .update(None, srgba_vec.as_slice(), 4 * window_width as usize)
