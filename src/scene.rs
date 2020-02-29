@@ -6,6 +6,7 @@ use crate::image::Pixel;
 use crate::lights::Sun;
 use crate::math::{Ray, UnitQuaternion, Vector3};
 use crate::surfaces::Surface;
+use std::error::Error;
 use std::{
     f64::{EPSILON, INFINITY},
     sync::{
@@ -60,7 +61,7 @@ impl Camera {
 /// rendered.
 #[derive(Default)]
 pub struct Scene {
-    surfaces: Vec<Box<Surface + Send + Sync>>,
+    surfaces: Vec<Box<dyn Surface + Send + Sync>>,
     camera: Camera,
     lights: Vec<Sun>,
 }
@@ -91,7 +92,7 @@ impl Scene {
         sender: Sender<(usize, usize, Pixel)>,
         thread_id: usize,
         num_threads: usize,
-    ) {
+    ) -> Result<(), Box<dyn Error>> {
         let pixel_size = self.camera.screen_width / width as f64;
 
         let center_of_screen = self.camera.direction() * self.camera.distance_to_screen;
@@ -130,9 +131,11 @@ impl Scene {
                         }
                     }
                 }
-                sender.send((pixel_x, pixel_y, rgb.into())).unwrap();
+                sender.send((pixel_x, pixel_y, rgb.into()))?;
             }
         }
+
+        Ok(())
     }
 
     /// Spawn multiple threads for rendering the scene. The number of threads
@@ -153,19 +156,22 @@ impl Scene {
             let sender_clone = sender.clone();
 
             thread::spawn(move || {
-                scene_clone.render(
-                    window_width,
-                    window_height,
-                    sender_clone,
-                    thread_id,
-                    num_threads,
-                );
+                scene_clone
+                    .render(
+                        window_width,
+                        window_height,
+                        sender_clone,
+                        thread_id,
+                        num_threads,
+                    )
+                    .unwrap();
             });
         }
 
-        let scene_clone = scene_arc.clone();
         thread::spawn(move || {
-            scene_clone.render(window_width, window_height, sender, 0, num_threads);
+            scene_arc
+                .render(window_width, window_height, sender, 0, num_threads)
+                .unwrap();
         });
 
         receiver

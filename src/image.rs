@@ -1,7 +1,7 @@
 //! Module for working with images and pixels.
 
 use crate::math::Vector3;
-use png::HasParameters;
+use std::error::Error;
 use std::fs::File;
 use std::io::BufWriter;
 
@@ -113,21 +113,22 @@ impl Image {
     }
 
     /// Save the image as a png file.
-    pub fn save_png(&self, filename: &str) {
+    pub fn save_png(&self, filename: &str) -> Result<(), Box<dyn Error>> {
         let srgba_vector = self.get_srgba_vector();
         let pixel_data = srgba_vector.as_slice();
 
-        let png_file = File::create(filename).unwrap();
+        let png_file = File::create(filename)?;
         let mut png_encoder = png::Encoder::new(
             BufWriter::new(png_file),
             self.width as u32,
             self.height as u32,
         );
-        png_encoder
-            .set(png::ColorType::RGBA)
-            .set(png::BitDepth::Eight);
-        let mut png_writer = png_encoder.write_header().unwrap();
-        png_writer.write_image_data(pixel_data).unwrap();
+        png_encoder.set_color(png::ColorType::RGBA);
+        png_encoder.set_depth(png::BitDepth::Eight);
+        let mut png_writer = png_encoder.write_header()?;
+        png_writer.write_image_data(pixel_data)?;
+
+        Ok(())
     }
 
     /// Find the minimum and maximum color values in the image, looking through

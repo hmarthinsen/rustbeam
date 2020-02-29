@@ -10,20 +10,21 @@ mod tests {
     use crate::lights::Sun;
     use crate::scene::Scene;
     use crate::surfaces::{Plane, Sphere};
+    use std::error::Error;
     use std::fs::File;
 
     /// Read a png file into a vector of SRGB data.
-    fn read_png(filename: &str) -> Vec<u8> {
-        let png_file = File::open(filename).unwrap();
+    fn read_png(filename: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+        let png_file = File::open(filename)?;
         let decoder = png::Decoder::new(png_file);
-        let (info, mut reader) = decoder.read_info().unwrap();
+        let (info, mut reader) = decoder.read_info()?;
         // Allocate the output buffer.
         let mut buf = vec![0; info.buffer_size()];
         // Read the next frame. Currently this function should only called once.
         // The default options
-        reader.next_frame(&mut buf).unwrap();
+        reader.next_frame(&mut buf)?;
 
-        buf
+        Ok(buf)
     }
 
     #[test]
@@ -32,10 +33,10 @@ mod tests {
         let filename = "test-data/test-data-out/test_make_image.png";
         let ref_filename = "test-data/test_make_image_ref.png";
 
-        image.save_png(filename);
+        image.save_png(filename).unwrap();
 
         let image_data = image.get_srgba_vector();
-        let ref_image_data = read_png(ref_filename);
+        let ref_image_data = read_png(ref_filename).unwrap();
         assert_eq!(*image_data, ref_image_data);
     }
 
@@ -58,7 +59,7 @@ mod tests {
         image.update(receiver.iter());
 
         let image_data = image.get_srgba_vector();
-        let ref_image_data = read_png(ref_filename);
+        let ref_image_data = read_png(ref_filename).unwrap();
         assert_eq!(*image_data, ref_image_data);
     }
 
@@ -81,7 +82,7 @@ mod tests {
         image.update(receiver.iter());
 
         let image_data = image.get_srgba_vector();
-        let ref_image_data = read_png(ref_filename);
+        let ref_image_data = read_png(ref_filename).unwrap();
         assert_eq!(*image_data, ref_image_data);
     }
 
@@ -105,7 +106,7 @@ mod tests {
         image.update(receiver.iter());
 
         let image_data = image.get_srgba_vector();
-        let ref_image_data = read_png(ref_filename);
+        let ref_image_data = read_png(ref_filename).unwrap();
         assert_eq!(*image_data, ref_image_data);
     }
 }

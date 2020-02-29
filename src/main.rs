@@ -9,11 +9,15 @@ use sdl2::{
     keyboard::Keycode,
     pixels::{Color, PixelFormatEnum},
 };
+use std::error::Error;
 
-pub fn main() {
+/// # Errors
+///
+/// Returns `Err` if any function call in the main function returns an `Err`.
+pub fn main() -> Result<(), Box<dyn Error>> {
     // Initialize SDL and make a window that can be drawn into.
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
+    let sdl_context = sdl2::init()?;
+    let video_subsystem = sdl_context.video()?;
 
     let window_width = 1280;
     let window_height = 720;
@@ -21,19 +25,20 @@ pub fn main() {
     let window = video_subsystem
         .window("rust-sdl2 demo", window_width, window_height)
         .position_centered()
-        .build()
-        .unwrap();
+        .build()?;
 
-    let mut canvas = window.into_canvas().present_vsync().build().unwrap();
+    let mut canvas = window.into_canvas().present_vsync().build()?;
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
     canvas.present();
 
     // Make a texture that is to be copied into the canvas every frame.
     let texture_creator = canvas.texture_creator();
-    let mut texture = texture_creator
-        .create_texture_streaming(PixelFormatEnum::ABGR8888, window_width, window_height)
-        .unwrap();
+    let mut texture = texture_creator.create_texture_streaming(
+        PixelFormatEnum::ABGR8888,
+        window_width,
+        window_height,
+    )?;
 
     // Make a scene and add surfaces and lights to it.
     let mut scene = Scene::new();
@@ -54,7 +59,7 @@ pub fn main() {
     // into the image.
     let receiver = scene.spawn_render_threads(window_width as usize, window_height as usize);
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut event_pump = sdl_context.event_pump()?;
 
     // SDL event loop.
     'render_loop: loop {
@@ -79,16 +84,16 @@ pub fn main() {
             // update the texture that is drawn on the screen.
             image.update(receiver_try_iter);
             let srgba_vec = image.get_srgba_vector();
-            texture
-                .update(None, srgba_vec.as_slice(), 4 * window_width as usize)
-                .unwrap();
+            texture.update(None, srgba_vec.as_slice(), 4 * window_width as usize)?;
 
-            canvas.copy(&texture, None, None).unwrap();
+            canvas.copy(&texture, None, None)?;
         }
 
         canvas.present();
     }
 
     image.clamp();
-    image.save_png("test-data/test-data-out/test.png");
+    image.save_png("test-data/test-data-out/test.png")?;
+
+    Ok(())
 }
